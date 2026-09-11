@@ -36,6 +36,21 @@ const clerkAppearance = {
     borderRadius: "0.75rem",
     fontFamily: "var(--font-geist-sans), sans-serif",
   },
+  // Hides the Google sign-in/sign-up option on this app specifically
+  // (decided inline with the engineer): Google OAuth stays enabled on the
+  // shared Clerk instance (the storefront still offers it), but this app's
+  // own pages never render it. This does not change who can act as admin —
+  // that's ADMIN_CLERK_USER_IDS (lib/auth/admin.ts), checked independently
+  // of how someone signed in. Element keys confirmed against the installed
+  // @clerk/ui source (customizables/elementDescriptors.js), not guessed:
+  // socialButtonsRoot is the whole social-buttons block (today, just the
+  // Google button — providers aren't individually filterable here), and
+  // dividerRow is the "or" separator that would otherwise be left dangling
+  // with nothing above it.
+  elements: {
+    socialButtonsRoot: { display: "none" },
+    dividerRow: { display: "none" },
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

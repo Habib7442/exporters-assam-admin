@@ -8,7 +8,9 @@ import {
   CreditCard,
   LayoutDashboard,
   MessageSquare,
+  Package,
   Settings,
+  Tag,
 } from "lucide-react";
 
 type NavItem = {
@@ -23,6 +25,8 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     items: [
       { href: "/", label: "Dashboard", icon: LayoutDashboard },
       { href: "/companies", label: "Companies", icon: Building2 },
+      { href: "/products", label: "Products", icon: Package },
+      { href: "/categories", label: "Categories", icon: Tag },
       { href: "/enquiries", label: "Enquiries", icon: MessageSquare },
       { href: "/buy-requirements", label: "Buy Requirements", icon: ClipboardList },
     ],

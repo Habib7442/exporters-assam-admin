@@ -2,25 +2,22 @@
 
 import { useState, useTransition } from "react";
 
-import { approveCompany, rejectCompany } from "@/lib/actions/company-approvals";
+import { approveProduct, rejectProduct } from "@/lib/actions/product-approvals";
 import { ErrorDialog, runAction } from "@/components/error-dialog";
 import { formatDateTime } from "@/lib/format-date";
 
-type PendingCompanyCardProps = {
+type PendingProductCardProps = {
   id: string;
   name: string;
-  slug: string;
-  location: string | null;
-  country: string;
-  logoUrl: string | null;
-  about: string | null;
-  email: string;
-  gstNumber: string | null;
-  whatsappNumber: string | null;
+  description: string | null;
+  imageUrl: string;
+  galleryUrls: string[];
+  categoryName: string | null;
+  companyName: string;
   createdAt: string;
 };
 
-export function PendingCompanyCard(company: PendingCompanyCardProps) {
+export function PendingProductCard(product: PendingProductCardProps) {
   const [pending, startTransition] = useTransition();
   const [rejecting, setRejecting] = useState(false);
   const [reason, setReason] = useState("");
@@ -30,7 +27,7 @@ export function PendingCompanyCard(company: PendingCompanyCardProps) {
   function handleApprove() {
     startTransition(async () => {
       await runAction(
-        () => approveCompany(company.id),
+        () => approveProduct(product.id),
         () => setDone("approved"),
         setError,
       );
@@ -40,7 +37,7 @@ export function PendingCompanyCard(company: PendingCompanyCardProps) {
   function handleReject() {
     startTransition(async () => {
       await runAction(
-        () => rejectCompany(company.id, reason),
+        () => rejectProduct(product.id, reason),
         () => setDone("rejected"),
         setError,
       );
@@ -50,40 +47,36 @@ export function PendingCompanyCard(company: PendingCompanyCardProps) {
   if (done) {
     return (
       <div className="rounded-lg border border-black/[.08] p-4 text-sm text-zinc-500 dark:border-white/[.145]">
-        {company.name} — {done}.
+        {product.name} — {done}.
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-3 rounded-lg border border-black/[.08] p-4 dark:border-white/[.145]">
-      <div className="flex items-start gap-4">
-        {company.logoUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- internal tool, no image config needed for a plain preview
-          <img
-            src={company.logoUrl}
-            alt={`${company.name} logo`}
-            className="size-12 shrink-0 rounded-full border border-black/[.08] object-cover dark:border-white/[.145]"
-          />
-        ) : (
-          <div className="flex size-12 shrink-0 items-center justify-center rounded-full bg-black/[.04] text-xs text-zinc-400 dark:bg-white/[.06]">
-            No logo
-          </div>
-        )}
-        <div className="flex flex-col gap-1">
-          <span className="font-semibold">{company.name}</span>
-          <span className="text-xs text-zinc-500">
-            {company.location ?? company.country} · {company.email}
-            {company.whatsappNumber ? ` · ${company.whatsappNumber}` : ""}
-            {company.gstNumber ? ` · GST ${company.gstNumber}` : ""}
-          </span>
-          <span className="text-xs text-zinc-400">
-            Submitted {formatDateTime(company.createdAt)}
-          </span>
-        </div>
+      <div className="flex flex-col gap-1">
+        <span className="font-semibold">{product.name}</span>
+        <span className="text-xs text-zinc-500">
+          {product.companyName}
+          {product.categoryName ? ` · ${product.categoryName}` : ""}
+          {product.galleryUrls.length > 1 ? ` · ${product.galleryUrls.length} images` : ""}
+        </span>
+        <span className="text-xs text-zinc-400">Submitted {formatDateTime(product.createdAt)}</span>
       </div>
 
-      {company.about && <p className="text-sm text-zinc-600 dark:text-zinc-400">{company.about}</p>}
+      <div className="flex flex-wrap gap-3">
+        {(product.galleryUrls.length > 0 ? product.galleryUrls : [product.imageUrl]).map((url, i) => (
+          // eslint-disable-next-line @next/next/no-img-element -- internal tool, no image config needed for a plain preview
+          <img
+            key={url}
+            src={url}
+            alt={`${product.name} — image ${i + 1}`}
+            className="size-40 shrink-0 rounded-lg border border-black/[.08] object-cover dark:border-white/[.145]"
+          />
+        ))}
+      </div>
+
+      {product.description && <p className="text-sm text-zinc-600 dark:text-zinc-400">{product.description}</p>}
 
       <ErrorDialog message={error} onDismiss={() => setError(null)} />
 

@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { formatDateTime } from "@/lib/format-date";
 import { getRecentBuyRequirements } from "@/lib/supabase/queries/buy-requirements";
 
 export default async function BuyRequirementsPage() {
@@ -16,9 +17,7 @@ export default async function BuyRequirementsPage() {
               <span className="font-medium text-[#1A1F1A]">
                 {requirement.productText} · {requirement.quantity}
               </span>
-              <span className="text-xs text-[#5B6B57]">
-                {new Date(requirement.createdAt).toLocaleString()}
-              </span>
+              <span className="text-xs text-[#5B6B57]">{formatDateTime(requirement.createdAt)}</span>
             </div>
             <p className="mt-1 text-[#5B6B57]">
               {requirement.contactName} · {requirement.buyerPhone}

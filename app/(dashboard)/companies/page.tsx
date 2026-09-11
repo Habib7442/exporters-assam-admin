@@ -1,4 +1,7 @@
+import Link from "next/link";
+
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { formatDate } from "@/lib/format-date";
 import { getAllCompanies } from "@/lib/supabase/queries/companies";
 
 const STATUS_STYLES: Record<string, string> = {
@@ -30,7 +33,10 @@ export default async function CompaniesPage() {
             {companies.map((company) => (
               <tr key={company.id} className="border-b border-[#E3E9DC] last:border-0">
                 <td className="px-4 py-3 font-medium text-[#1A1F1A]">
-                  {company.name} {company.verified && <span title="Verified">✅</span>}
+                  <Link href={`/companies/${company.id}`} className="hover:underline">
+                    {company.name}
+                  </Link>{" "}
+                  {company.verified && <span title="Verified">✅</span>}
                 </td>
                 <td className="px-4 py-3 text-[#5B6B57]">{company.location ?? company.country}</td>
                 <td className="px-4 py-3 text-[#5B6B57]">{company.email}</td>
@@ -39,7 +45,7 @@ export default async function CompaniesPage() {
                     {company.status}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-[#5B6B57]">{new Date(company.createdAt).toLocaleDateString()}</td>
+                <td className="px-4 py-3 text-[#5B6B57]">{formatDate(company.createdAt)}</td>
               </tr>
             ))}
           </tbody>

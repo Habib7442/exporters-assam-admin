@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
+import { formatDateTime } from "@/lib/format-date";
 import { getRecentEnquiries } from "@/lib/supabase/queries/enquiries";
 
 export default async function EnquiriesPage() {
@@ -16,7 +17,7 @@ export default async function EnquiriesPage() {
               <span className="font-medium text-[#1A1F1A]">
                 {enquiry.productName ?? enquiry.companyName ?? "General enquiry"}
               </span>
-              <span className="text-xs text-[#5B6B57]">{new Date(enquiry.createdAt).toLocaleString()}</span>
+              <span className="text-xs text-[#5B6B57]">{formatDateTime(enquiry.createdAt)}</span>
             </div>
             <p className="mt-1 text-[#5B6B57]">
               {enquiry.contactName} · {enquiry.buyerPhone}
