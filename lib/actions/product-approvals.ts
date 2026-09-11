@@ -17,17 +17,23 @@ export async function approveProduct(productId: string): Promise<ApprovalResult>
 
   // Scoped to status = 'pending', same reasoning as approveCompany: only
   // ever moves a product forward from the state the queue actually showed
-  // it in, never re-approves an already-approved row or races a second
-  // admin acting on the same one.
-  const { error } = await supabaseAdmin
+  // it in, never re-approves an already-approved row. `.select("id")`
+  // matters here: without it, an update that matches zero rows (a second
+  // admin already acted on this one) still returns error: null, so the
+  // caller would otherwise get a false { ok: true } while the database
+  // stayed untouched.
+  const { data, error } = await supabaseAdmin
     .from("products")
     .update({ status: "approved", rejection_reason: null })
     .eq("id", productId)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id");
 
   if (error) return { ok: false, message: "Something went wrong. Please try again." };
+  if (!data?.length) return { ok: false, message: "This product was already reviewed by someone else." };
 
   revalidatePath("/products");
+  revalidatePath("/");
   return { ok: true };
 }
 
@@ -41,14 +47,17 @@ export async function rejectProduct(productId: string, reason: string): Promise<
   if (!trimmedReason) return { ok: false, message: "Enter a reason." };
   if (trimmedReason.length > 500) return { ok: false, message: "Reason must be under 500 characters." };
 
-  const { error } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from("products")
     .update({ status: "rejected", rejection_reason: trimmedReason })
     .eq("id", productId)
-    .eq("status", "pending");
+    .eq("status", "pending")
+    .select("id");
 
   if (error) return { ok: false, message: "Something went wrong. Please try again." };
+  if (!data?.length) return { ok: false, message: "This product was already reviewed by someone else." };
 
   revalidatePath("/products");
+  revalidatePath("/");
   return { ok: true };
 }

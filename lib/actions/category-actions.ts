@@ -36,6 +36,17 @@ async function uploadCategoryImage(image: File | null): Promise<{ url: string | 
   }
 }
 
+/** Best effort only: an orphaned R2 object is an accepted, low cost tradeoff (same reasoning as business-listing.ts's deleteLogoBestEffort). */
+async function deleteImageBestEffort(url: string): Promise<void> {
+  const parsed = parseR2Url(url);
+  if (!parsed) return;
+  try {
+    await deleteFromR2(parsed.category, parsed.key);
+  } catch {
+    // best effort only
+  }
+}
+
 /** Creates a category, live immediately — no approval needed, same as an admin-added product. */
 export async function createCategory(name: string, image: File | null): Promise<CategoryActionResult> {
   await requireAdmin();
@@ -53,6 +64,7 @@ export async function createCategory(name: string, image: File | null): Promise<
   });
 
   if (error) {
+    if (imageUrl) await deleteImageBestEffort(imageUrl);
     if (error.code === "23505") return { ok: false, message: "A category with that name already exists." };
     return { ok: false, message: "Something went wrong. Please try again." };
   }
@@ -99,21 +111,13 @@ export async function updateCategory(
   });
 
   if (error) {
+    if (newImageUrl) await deleteImageBestEffort(newImageUrl);
     if (error.code === "23505") return { ok: false, message: "A category with that name already exists." };
     if (error.code === "P0004") return { ok: false, message: "Category not found." };
     return { ok: false, message: "Something went wrong. Please try again." };
   }
 
-  if (newImageUrl && previousImageUrl) {
-    const parsed = parseR2Url(previousImageUrl);
-    if (parsed) {
-      try {
-        await deleteFromR2(parsed.category, parsed.key);
-      } catch {
-        // best effort only
-      }
-    }
-  }
+  if (newImageUrl && previousImageUrl) await deleteImageBestEffort(previousImageUrl);
 
   revalidatePath("/categories");
   return { ok: true };

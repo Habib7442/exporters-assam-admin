@@ -1,6 +1,8 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export type PendingCompany = {
   id: string;
   name: string;
@@ -98,8 +100,18 @@ export type CompanyDetail = {
   createdAt: string;
 };
 
-/** One company by id, any status — the Companies detail page. */
+/**
+ * One company by id, any status — the Companies detail page. `id` comes
+ * straight from the `[id]` route segment (untrusted, unlike the ids
+ * elsewhere in this app that route through requireAdmin-gated server
+ * actions after their own validation) — a malformed one would otherwise
+ * reach Postgres as `.eq("id", id)`, which fails to cast to `uuid` and
+ * throws (22P02) instead of returning null, sending a bad URL to Next's
+ * generic error boundary rather than this page's own `notFound()`.
+ */
 export async function getCompanyById(id: string): Promise<CompanyDetail | null> {
+  if (!UUID_RE.test(id)) return null;
+
   const { data, error } = await supabaseAdmin
     .from("companies")
     .select(
