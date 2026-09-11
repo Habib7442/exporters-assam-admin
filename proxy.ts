@@ -3,7 +3,18 @@ import { NextResponse } from "next/server";
 
 import { isAdminUserId } from "@/lib/auth/admin";
 
-const isPublicRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)", "/not-authorized"]);
+// "/__clerk/:path*" must be public too: Clerk's own JS SDK/UI bundles are
+// served through this proxy path (see the matcher below), and a signed-out
+// visitor loading /sign-in needs to fetch them *before* they have a
+// session — redirecting this path to /sign-in (as every other protected
+// route does) creates a loop where the sign-in page can never load its own
+// script, and the browser gets that page's HTML back instead of real JS.
+const isPublicRoute = createRouteMatcher([
+  "/sign-in(.*)",
+  "/sign-up(.*)",
+  "/not-authorized",
+  "/__clerk(.*)",
+]);
 
 export default clerkMiddleware(async (auth, req) => {
   if (isPublicRoute(req)) return;
