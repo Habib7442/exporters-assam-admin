@@ -16,6 +16,6 @@ export class NotAuthorizedError extends Error {
  */
 export async function requireAdmin(): Promise<string> {
   const { userId } = await auth();
-  if (!isAdminUserId(userId)) throw new NotAuthorizedError();
+  if (!(await isAdminUserId(userId))) throw new NotAuthorizedError();
   return userId!;
 }
