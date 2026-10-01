@@ -50,7 +50,13 @@ export default async function CompanyDetailPage({ params }: Props) {
       {/* Hide hides the company and all its products from the public site; the storefront shows changes within 5 minutes. */}
       <div className="flex flex-col gap-2 rounded-xl border border-[#E3E9DC] bg-white p-4">
         <span className="text-xs uppercase text-[#5B6B57]">Manage listing</span>
-        <ListingControls kind="company" id={company.id} name={company.name} status={company.status} />
+        <ListingControls
+          kind="company"
+          id={company.id}
+          name={company.name}
+          status={company.status}
+          editHref={`/companies/${company.id}/edit`}
+        />
       </div>
 
       <div className="grid gap-4 rounded-xl border border-[#E3E9DC] bg-white p-5 text-sm sm:grid-cols-2">
@@ -149,7 +155,14 @@ export default async function CompanyDetailPage({ params }: Props) {
                     </td>
                     <td className="px-4 py-3 text-[#5B6B57]">{formatDate(product.createdAt)}</td>
                     <td className="px-4 py-3">
-                      <ListingControls kind="product" id={product.id} name={product.name} status={product.status} compact />
+                      <ListingControls
+                        kind="product"
+                        id={product.id}
+                        name={product.name}
+                        status={product.status}
+                        compact
+                        editHref={`/products/${product.id}/edit`}
+                      />
                     </td>
                   </tr>
                 ))}

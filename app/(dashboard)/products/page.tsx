@@ -157,7 +157,14 @@ export default async function ProductsPage({ searchParams }: Props) {
                     </td>
                     <td className="px-4 py-3 text-[#5B6B57]">{formatDate(product.createdAt)}</td>
                     <td className="px-4 py-3">
-                      <ListingControls kind="product" id={product.id} name={product.name} status={product.status} compact />
+                      <ListingControls
+                        kind="product"
+                        id={product.id}
+                        name={product.name}
+                        status={product.status}
+                        compact
+                        editHref={`/products/${product.id}/edit`}
+                      />
                     </td>
                   </tr>
                 ))}

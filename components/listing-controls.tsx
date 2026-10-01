@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
@@ -30,6 +31,8 @@ type ListingControlsProps = {
   status: string;
   /** Smaller buttons for a table row. */
   compact?: boolean;
+  /** Where the Edit button goes; no Edit button when absent. */
+  editHref?: string;
 };
 
 const ACTIONS = {
@@ -42,7 +45,7 @@ const ACTIONS = {
  * product or company (storefront spec 0007). Changes reach the public site
  * within its 5 minute page cache.
  */
-export function ListingControls({ kind, id, name, status, compact = false }: ListingControlsProps) {
+export function ListingControls({ kind, id, name, status, compact = false, editHref }: ListingControlsProps) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -72,6 +75,11 @@ export function ListingControls({ kind, id, name, status, compact = false }: Lis
     <div className="flex flex-wrap gap-2">
       <ErrorDialog message={error} onDismiss={() => setError(null)} />
 
+      {editHref && (
+        <Link href={editHref} className={`rounded-full border border-[#E3E9DC] font-medium ${size}`}>
+          Edit
+        </Link>
+      )}
       {status === "approved" && (
         <button
           type="button"

@@ -3,18 +3,32 @@
 import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
-import { deleteFromR2, uploadToR2 } from "@/lib/storage/r2";
+import { deleteImagesByUrl, imageFileError, MAX_PRODUCT_IMAGES, removeUploads, uploadImages } from "@/lib/image-upload";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-// Same limits as a supplier's own product submission on the storefront.
-const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
-const MAX_IMAGES = 5;
-const ALLOWED_IMAGE_TYPES: Record<string, string> = {
-  "image/jpeg": "jpg",
-  "image/png": "png",
-  "image/webp": "webp",
-};
+
+type FieldErrors = Partial<Record<"name" | "categoryId" | "images", string>>;
+
+export type AdminProductResult = { ok: true } | { ok: false; message: string; fieldErrors?: FieldErrors };
+
+const CHECK_FORM = "Please check the form.";
+
+/** The name, category and description rules, shared by add and edit. */
+function checkDetails(input: { name: string; description: string; categoryId: string }): {
+  name: string;
+  description: string;
+  fieldErrors: FieldErrors;
+  descriptionError: string | null;
+} {
+  const name = input.name.trim();
+  const description = input.description.trim();
+  const fieldErrors: FieldErrors = {};
+  if (name.length < 2) fieldErrors.name = "Enter a product name.";
+  else if (name.length > 200) fieldErrors.name = "Name must be under 200 characters.";
+  if (!UUID_RE.test(input.categoryId)) fieldErrors.categoryId = "Choose a category.";
+  return { name, description, fieldErrors, descriptionError: description.length > 2000 ? "Description must be under 2000 characters." : null };
+}
 
 export type AdminProductInput = {
   companyId: string;
@@ -24,103 +38,126 @@ export type AdminProductInput = {
   images: File[];
 };
 
-export type AdminProductResult =
-  | { ok: true; slug: string }
-  | { ok: false; message: string; fieldErrors?: Partial<Record<"name" | "categoryId" | "images", string>> };
-
-/**
- * True when the bytes really start like the claimed image type, so a file
- * renamed to .jpg can't be stored as a product photo. A light check without
- * a decoder: the admin is a trusted internal user, unlike the storefront's
- * public supplier uploads, which decode every image with sharp.
- */
-function hasImageSignature(bytes: Uint8Array, type: string): boolean {
-  if (type === "image/jpeg") return bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
-  if (type === "image/png") return [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].every((b, i) => bytes[i] === b);
-  if (type === "image/webp") {
-    const ascii = (from: number, to: number) => String.fromCharCode(...bytes.slice(from, to));
-    return ascii(0, 4) === "RIFF" && ascii(8, 12) === "WEBP";
-  }
-  return false;
-}
-
-async function cleanupUploads(keys: string[]): Promise<void> {
-  await Promise.all(
-    keys.map((key) =>
-      deleteFromR2("products", key).catch(() => {
-        // best effort only: an orphaned R2 object is an accepted, low cost tradeoff
-      }),
-    ),
-  );
-}
-
 /**
  * Adds a product to a company, live immediately (PRD Section 4: an admin
  * added product needs no approval). Images are checked, then uploaded to
- * R2 under `products/admin/{uuid}.{ext}`, then the product is written
- * through `create_admin_product`, which also checks the company is
- * approved. Any failure after an upload removes the uploaded images.
+ * R2 under `products/admin/`, then the product is written through
+ * `create_admin_product`, which also checks the company is approved. Any
+ * failure after an upload removes the uploaded images.
  */
 export async function createAdminProduct(input: AdminProductInput): Promise<AdminProductResult> {
   await requireAdmin();
-
   if (!UUID_RE.test(input.companyId)) return { ok: false, message: "Invalid company." };
 
-  const name = input.name.trim();
-  const description = input.description.trim();
-  const fieldErrors: NonNullable<Extract<AdminProductResult, { ok: false }>["fieldErrors"]> = {};
-  if (name.length < 2) fieldErrors.name = "Enter a product name.";
-  else if (name.length > 200) fieldErrors.name = "Name must be under 200 characters.";
-  if (!UUID_RE.test(input.categoryId)) fieldErrors.categoryId = "Choose a category.";
-
+  const { name, description, fieldErrors, descriptionError } = checkDetails(input);
   const images = input.images.filter((file) => file.size > 0);
   if (images.length === 0) fieldErrors.images = "Add at least one image.";
-  else if (images.length > MAX_IMAGES) fieldErrors.images = `Up to ${MAX_IMAGES} images.`;
-  else if (images.some((file) => !(file.type in ALLOWED_IMAGE_TYPES))) fieldErrors.images = "Images must be JPG, PNG, or WebP.";
-  else if (images.some((file) => file.size > MAX_IMAGE_BYTES)) fieldErrors.images = "Each image must be under 2 MB.";
+  else if (images.length > MAX_PRODUCT_IMAGES) fieldErrors.images = `Up to ${MAX_PRODUCT_IMAGES} images.`;
+  else fieldErrors.images = imageFileError(images) ?? undefined;
+  if (!fieldErrors.images) delete fieldErrors.images;
 
-  if (description.length > 2000) return { ok: false, message: "Description must be under 2000 characters." };
-  if (Object.keys(fieldErrors).length > 0) return { ok: false, message: "Please check the form.", fieldErrors };
+  if (descriptionError) return { ok: false, message: descriptionError };
+  if (Object.keys(fieldErrors).length > 0) return { ok: false, message: CHECK_FORM, fieldErrors };
 
-  // Read and check every file before uploading any, so one bad file never
-  // leaves the others orphaned in R2.
-  const buffers = await Promise.all(images.map(async (file) => Buffer.from(await file.arrayBuffer())));
-  if (buffers.some((buffer, i) => !hasImageSignature(buffer, images[i].type))) {
-    return { ok: false, message: "Please check the form.", fieldErrors: { images: "Images must be real JPG, PNG, or WebP files." } };
-  }
-
-  const keys: string[] = [];
-  const uploads = await Promise.allSettled(
-    buffers.map(async (buffer, i) => {
-      const key = `admin/${crypto.randomUUID()}.${ALLOWED_IMAGE_TYPES[images[i].type]}`;
-      const url = await uploadToR2("products", key, buffer, images[i].type);
-      keys.push(key);
-      return url;
-    }),
-  );
-  if (uploads.some((upload) => upload.status === "rejected")) {
-    await cleanupUploads(keys);
-    return { ok: false, message: "Could not upload the images. Please try again." };
-  }
-  const imageUrls = uploads.map((upload) => (upload as PromiseFulfilledResult<string>).value);
+  const upload = await uploadImages("products", "admin", images);
+  if (!upload.ok) return { ok: false, message: CHECK_FORM, fieldErrors: { images: upload.error } };
 
   const { data, error } = await supabaseAdmin.rpc("create_admin_product", {
     p_company_id: input.companyId,
     p_name: name,
     p_description: (description || null) as string,
     p_category_id: input.categoryId,
-    p_image_urls: imageUrls,
+    p_image_urls: upload.urls,
   });
 
   if (error || !data?.[0]) {
-    await cleanupUploads(keys);
+    await removeUploads("products", upload.keys);
     if (error?.code === "P0004") return { ok: false, message: "This company no longer exists." };
     if (error?.code === "P0007") return { ok: false, message: "Products can only be added to an approved company." };
-    if (error?.code === "23503") return { ok: false, message: "Please check the form.", fieldErrors: { categoryId: "Choose a category." } };
+    if (error?.code === "23503") return { ok: false, message: CHECK_FORM, fieldErrors: { categoryId: "Choose a category." } };
     return { ok: false, message: "Something went wrong. Please try again." };
   }
 
   revalidatePath(`/companies/${input.companyId}`);
   revalidatePath("/products");
-  return { ok: true, slug: data[0].slug };
+  return { ok: true };
+}
+
+export type UpdateAdminProductInput = {
+  productId: string;
+  name: string;
+  description: string;
+  categoryId: string;
+  /** Which of the product's current images to keep, in order; the first kept is the main photo. */
+  keepImageUrls: string[];
+  newImages: File[];
+};
+
+/**
+ * Edits any product's details and photos. The status stays as it is: an
+ * admin is trusted, so an approved product stays live (unlike a supplier's
+ * own edit, which goes back to review). The slug stays the same, so links
+ * keep working. Kept images must be ones the product already has; images
+ * the edit dropped are deleted from R2 after the write succeeds.
+ */
+export async function updateAdminProduct(input: UpdateAdminProductInput): Promise<AdminProductResult> {
+  await requireAdmin();
+  if (!UUID_RE.test(input.productId)) return { ok: false, message: "Invalid product." };
+
+  const { name, description, fieldErrors, descriptionError } = checkDetails(input);
+  const newImages = input.newImages.filter((file) => file.size > 0);
+  const total = input.keepImageUrls.length + newImages.length;
+  if (total === 0) fieldErrors.images = "Keep or add at least one image.";
+  else if (total > MAX_PRODUCT_IMAGES) fieldErrors.images = `Up to ${MAX_PRODUCT_IMAGES} images in total.`;
+  else if (newImages.length > 0) fieldErrors.images = imageFileError(newImages) ?? undefined;
+  if (!fieldErrors.images) delete fieldErrors.images;
+
+  if (descriptionError) return { ok: false, message: descriptionError };
+  if (Object.keys(fieldErrors).length > 0) return { ok: false, message: CHECK_FORM, fieldErrors };
+
+  const { data: product, error: readError } = await supabaseAdmin
+    .from("products")
+    .select("id, company_id, image_url, gallery_urls")
+    .eq("id", input.productId)
+    .maybeSingle();
+  if (readError) return { ok: false, message: "Something went wrong. Please try again." };
+  if (!product) return { ok: false, message: "This product no longer exists." };
+
+  const currentUrls = product.gallery_urls.length > 0 ? product.gallery_urls : [product.image_url];
+  if (input.keepImageUrls.some((url) => !currentUrls.includes(url))) {
+    return { ok: false, message: CHECK_FORM, fieldErrors: { images: "The photos changed while you were editing. Reload and try again." } };
+  }
+
+  let newUrls: string[] = [];
+  let newKeys: string[] = [];
+  if (newImages.length > 0) {
+    const upload = await uploadImages("products", "admin", newImages);
+    if (!upload.ok) return { ok: false, message: CHECK_FORM, fieldErrors: { images: upload.error } };
+    newUrls = upload.urls;
+    newKeys = upload.keys;
+  }
+
+  const imageUrls = [...input.keepImageUrls, ...newUrls];
+  const { error } = await supabaseAdmin
+    .from("products")
+    .update({
+      name,
+      description: description || null,
+      category_id: input.categoryId,
+      image_url: imageUrls[0],
+      gallery_urls: imageUrls,
+    })
+    .eq("id", product.id);
+
+  if (error) {
+    await removeUploads("products", newKeys);
+    if (error.code === "23503") return { ok: false, message: CHECK_FORM, fieldErrors: { categoryId: "Choose a category." } };
+    return { ok: false, message: "Something went wrong. Please try again." };
+  }
+
+  await deleteImagesByUrl(currentUrls.filter((url) => !input.keepImageUrls.includes(url)));
+
+  revalidatePath(`/companies/${product.company_id}`);
+  revalidatePath("/products");
+  return { ok: true };
 }

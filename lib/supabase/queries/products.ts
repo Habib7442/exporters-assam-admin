@@ -108,3 +108,37 @@ export async function getAllProducts(): Promise<ProductListItem[]> {
     company: row.companies ? { id: row.companies.id, name: row.companies.name, status: row.companies.status } : null,
   }));
 }
+
+export type ProductForEdit = {
+  id: string;
+  name: string;
+  description: string | null;
+  categoryId: string;
+  imageUrls: string[];
+  status: string;
+  company: { id: string; name: string } | null;
+};
+
+/** One product, any status, for the admin's edit page; null for a missing or malformed id. */
+export async function getProductForEdit(id: string): Promise<ProductForEdit | null> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) return null;
+
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select("id, name, description, category_id, image_url, gallery_urls, status, companies(id, name)")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  return {
+    id: data.id,
+    name: data.name,
+    description: data.description,
+    categoryId: data.category_id,
+    imageUrls: data.gallery_urls.length > 0 ? data.gallery_urls : [data.image_url],
+    status: data.status,
+    company: data.companies ? { id: data.companies.id, name: data.companies.name } : null,
+  };
+}
