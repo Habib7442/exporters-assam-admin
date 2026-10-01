@@ -26,14 +26,20 @@ export function SearchInput({ placeholder = "Search...", debounceMs = 300 }: Sea
 
   const [value, setValue] = useState(urlValue);
   const [syncedUrlValue, setSyncedUrlValue] = useState(urlValue);
+  // The last value this box itself sent to the URL.
+  const [issuedValue, setIssuedValue] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // Follow outside URL changes (back/forward) without fighting the admin's
-  // own typing: adjusted during render, React's "adjusting state when a
-  // prop changes" pattern, not in an effect.
+  // Follow outside URL changes (back/forward, a link) without fighting the
+  // admin's own typing: adjusted during render, React's "adjusting state
+  // when a prop changes" pattern, not in an effect. When the URL change is
+  // the box's own search arriving, the text is left alone: the admin may
+  // have kept typing ("car" sent, "cart" typed since), and resetting it
+  // would drop that draft and cancel its pending update.
   if (urlValue !== syncedUrlValue) {
     setSyncedUrlValue(urlValue);
-    setValue(urlValue);
+    if (urlValue !== issuedValue) setValue(urlValue);
+    setIssuedValue(null);
   }
 
   useEffect(() => {
@@ -43,6 +49,7 @@ export function SearchInput({ placeholder = "Search...", debounceMs = 300 }: Sea
       const trimmed = value.trim();
       if (trimmed) params.set("q", trimmed);
       else params.delete("q");
+      setIssuedValue(trimmed);
       startTransition(() => {
         router.replace(params.size > 0 ? `${pathname}?${params.toString()}` : pathname);
       });
