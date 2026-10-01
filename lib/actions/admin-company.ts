@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { deleteImagesByUrl, imageFileError, removeUploads, uploadImages } from "@/lib/image-upload";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { refreshStorefront } from "@/lib/storefront";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -155,6 +156,9 @@ export async function updateAdminCompany(input: AdminCompanyInput): Promise<Admi
   revalidatePath(`/companies/${company.id}`);
   revalidatePath("/companies");
   revalidatePath("/products");
+
+  // The company row changed either way, so refresh before reporting a contact error.
+  await refreshStorefront();
 
   if (contactError) {
     return { ok: false, message: "The details were saved, but the WhatsApp number couldn't be updated. Please try saving again." };

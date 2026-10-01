@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { refreshStorefront } from "@/lib/storefront";
 
 /**
  * Moderation for public buy requirements, which anyone can post without an
@@ -41,6 +42,7 @@ export async function takeDownBuyRequirement(id: string): Promise<ModerationResu
   if (!data?.length) return { ok: false, message: "This changed since the page loaded. Refresh and try again." };
 
   revalidatePath("/buy-requirements");
+  await refreshStorefront();
   return { ok: true };
 }
 
@@ -55,5 +57,6 @@ export async function deleteBuyRequirement(id: string): Promise<ModerationResult
   if (!data?.length) return { ok: false, message: "This buy requirement was already deleted." };
 
   revalidatePath("/buy-requirements");
+  await refreshStorefront();
   return { ok: true };
 }

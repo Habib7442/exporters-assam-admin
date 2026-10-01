@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { refreshStorefront } from "@/lib/storefront";
 import { deleteFromR2, parseR2Url, uploadToR2 } from "@/lib/storage/r2";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -70,6 +71,7 @@ export async function createCategory(name: string, image: File | null): Promise<
   }
 
   revalidatePath("/categories");
+  await refreshStorefront();
   return { ok: true };
 }
 
@@ -120,6 +122,7 @@ export async function updateCategory(
   if (newImageUrl && previousImageUrl) await deleteImageBestEffort(previousImageUrl);
 
   revalidatePath("/categories");
+  await refreshStorefront();
   return { ok: true };
 }
 
@@ -139,5 +142,6 @@ export async function deleteCategory(categoryId: string): Promise<CategoryAction
   }
 
   revalidatePath("/categories");
+  await refreshStorefront();
   return { ok: true };
 }

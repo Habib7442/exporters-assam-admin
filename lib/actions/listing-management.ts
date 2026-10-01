@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { deleteFromR2, parseR2Url } from "@/lib/storage/r2";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { refreshStorefront } from "@/lib/storefront";
 
 /**
  * Take downs for live listings (storefront spec 0007): hide, unhide and
@@ -46,6 +47,7 @@ async function moveStatus(table: ListingTable, id: string, from: string, to: str
   if (!data?.length) return { ok: false, message: "This changed since the page loaded. Refresh and try again." };
 
   revalidatePath("/companies", "layout");
+  await refreshStorefront();
   return { ok: true };
 }
 
@@ -105,6 +107,7 @@ export async function deleteProductPermanently(productId: string): Promise<Manag
 
   revalidatePath("/companies", "layout");
   revalidatePath("/products");
+  await refreshStorefront();
   return { ok: true };
 }
 
@@ -135,5 +138,6 @@ export async function deleteCompanyPermanently(companyId: string): Promise<Manag
 
   revalidatePath("/companies", "layout");
   revalidatePath("/products");
+  await refreshStorefront();
   return { ok: true };
 }

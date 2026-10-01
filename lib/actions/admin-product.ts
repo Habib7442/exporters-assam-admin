@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { deleteImagesByUrl, imageFileError, MAX_PRODUCT_IMAGES, removeUploads, uploadImages } from "@/lib/image-upload";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { refreshStorefront } from "@/lib/storefront";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -80,6 +81,7 @@ export async function createAdminProduct(input: AdminProductInput): Promise<Admi
 
   revalidatePath(`/companies/${input.companyId}`);
   revalidatePath("/products");
+  await refreshStorefront();
   return { ok: true };
 }
 
@@ -159,5 +161,6 @@ export async function updateAdminProduct(input: UpdateAdminProductInput): Promis
 
   revalidatePath(`/companies/${product.company_id}`);
   revalidatePath("/products");
+  await refreshStorefront();
   return { ok: true };
 }

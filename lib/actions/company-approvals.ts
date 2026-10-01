@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { refreshStorefront } from "@/lib/storefront";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -42,6 +43,7 @@ export async function approveCompany(companyId: string): Promise<ApprovalResult>
   revalidatePath("/");
   revalidatePath("/companies");
   revalidatePath(`/companies/${companyId}`);
+  await refreshStorefront();
   return { ok: true };
 }
 
@@ -68,5 +70,6 @@ export async function rejectCompany(companyId: string, reason: string): Promise<
   revalidatePath("/");
   revalidatePath("/companies");
   revalidatePath(`/companies/${companyId}`);
+  await refreshStorefront();
   return { ok: true };
 }
