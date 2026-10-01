@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   const recentEnquiries = enquiries.slice(0, RECENT_ENQUIRIES_LIMIT);
 
   return (
-    <main className="flex flex-1 flex-col gap-8 p-6">
+    <main className="flex flex-1 flex-col gap-8 p-4 sm:p-6">
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard label="Companies" value={stats.totalCompanies} icon={Building2} href="/companies" />
         <StatCard label="Pending companies" value={stats.pendingCompanies} icon={Building2} href="/companies" />

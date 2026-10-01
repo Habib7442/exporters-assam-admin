@@ -16,7 +16,7 @@ export default async function CompaniesPage() {
   const companies = await getAllCompanies();
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-6">
+    <main className="flex flex-1 flex-col gap-4 p-4 sm:p-6">
       <p className="text-sm text-[#5B6B57]">{companies.length} companies.</p>
 
       <div className="overflow-x-auto rounded-xl border border-[#E3E9DC] bg-white">

@@ -67,7 +67,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   const groups = groupByCompany(visibleProducts);
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
+    <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
       <div className="flex flex-col gap-2">
         <SearchInput placeholder="Search products, companies or categories..." />
         {query && (

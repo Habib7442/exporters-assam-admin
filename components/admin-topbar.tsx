@@ -3,6 +3,8 @@
 import { usePathname } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 
+import { MobileNav } from "@/components/admin-sidebar";
+
 const PAGE_TITLES: Record<string, string> = {
   "/": "Dashboard",
   "/companies": "Companies",
@@ -26,8 +28,11 @@ export function AdminTopbar() {
   const title = resolveTitle(pathname);
 
   return (
-    <header className="flex items-center justify-between gap-4 border-b border-[#E3E9DC] bg-white px-6 py-4">
-      <h1 className="text-lg font-semibold text-[#14532D]">{title}</h1>
+    <header className="sticky top-0 z-40 flex items-center justify-between gap-3 border-b border-[#E3E9DC] bg-white px-4 py-3 sm:px-6 sm:py-4">
+      <div className="flex min-w-0 items-center gap-2">
+        <MobileNav />
+        <h1 className="truncate text-lg font-semibold text-[#14532D]">{title}</h1>
+      </div>
       <UserButton />
     </header>
   );

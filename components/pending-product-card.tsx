@@ -71,7 +71,7 @@ export function PendingProductCard(product: PendingProductCardProps) {
             key={url}
             src={url}
             alt={`${product.name} — image ${i + 1}`}
-            className="size-40 shrink-0 rounded-lg border border-black/[.08] object-cover dark:border-white/[.145]"
+            className="size-28 shrink-0 rounded-lg sm:size-40 border border-black/[.08] object-cover dark:border-white/[.145]"
           />
         ))}
       </div>

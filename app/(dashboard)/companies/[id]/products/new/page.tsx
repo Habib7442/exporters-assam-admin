@@ -21,7 +21,7 @@ export default async function NewCompanyProductPage({ params }: Props) {
   const categories = company.status === "approved" ? await getCategories() : [];
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-6">
+    <main className="flex flex-1 flex-col gap-4 p-4 sm:p-6">
       <div className="flex flex-col gap-1">
         <Link href={`/companies/${company.id}`} className="text-xs font-medium text-[#5B6B57] hover:underline">
           &larr; {company.name}

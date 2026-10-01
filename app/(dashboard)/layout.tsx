@@ -5,7 +5,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen">
       <AdminSidebar />
-      <div className="flex flex-1 flex-col bg-[#F6FAF0]">
+      {/* min-w-0 lets this column shrink below its content, so wide tables scroll inside their own box instead of widening the page. */}
+      <div className="flex min-w-0 flex-1 flex-col bg-[#F6FAF0]">
         <AdminTopbar />
         {children}
       </div>

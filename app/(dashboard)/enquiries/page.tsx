@@ -7,7 +7,7 @@ export default async function EnquiriesPage() {
   const enquiries = await getRecentEnquiries();
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-6">
+    <main className="flex flex-1 flex-col gap-4 p-4 sm:p-6">
       <p className="text-sm text-[#5B6B57]">{enquiries.length} enquiries.</p>
 
       <div className="flex flex-col gap-3">

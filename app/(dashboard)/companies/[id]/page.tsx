@@ -29,7 +29,7 @@ export default async function CompanyDetailPage({ params }: Props) {
   const products = await getProductsByCompany(id);
 
   return (
-    <main className="flex flex-1 flex-col gap-6 p-6">
+    <main className="flex flex-1 flex-col gap-6 p-4 sm:p-6">
       <div className="flex flex-col gap-1">
         <Link href="/companies" className="text-xs font-medium text-[#5B6B57] hover:underline">
           &larr; All companies
