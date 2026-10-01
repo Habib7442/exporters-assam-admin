@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* The admin is light only (see the note above `body`), so `dark:` utilities
+   follow a `.dark` class this app never sets instead of the system setting:
+   on a phone in dark mode they would otherwise turn borders and tints
+   near white on the admin's fixed light backgrounds. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -58,32 +64,13 @@
   --radius: 0.625rem;
 }
 
-/* System-preference based, matching this file's existing convention (no
-   theme toggle exists in this app, so a class-based .dark variant would
-   never activate) — every dark: utility already used throughout this
-   app's components relies on Tailwind's default prefers-color-scheme
-   variant, not a .dark class. */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-    --card: #14532d;
-    --card-foreground: #ededed;
-    --popover: #14171a;
-    --popover-foreground: #ededed;
-    --primary: #7cb342;
-    --primary-foreground: #0a0a0a;
-    --secondary: #1f2a1f;
-    --secondary-foreground: #ededed;
-    --muted: #1a1f1a;
-    --muted-foreground: #a3ada0;
-    --accent: #1f2a1f;
-    --accent-foreground: #ededed;
-    --destructive: #f87171;
-    --border: rgba(255, 255, 255, 0.145);
-    --input: rgba(255, 255, 255, 0.145);
-    --ring: #7cb342;
-  }
+/* Light only. Every admin page paints fixed light colours (white cards on
+   #F6FAF0), so a dark-mode switch of these variables only turned text
+   without its own colour near white on white: on a phone in dark mode the
+   Edit and Hide buttons became invisible. `color-scheme: light` also keeps
+   form fields, scrollbars and pickers light whatever the system setting. */
+:root {
+  color-scheme: light;
 }
 
 body {
