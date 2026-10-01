@@ -11,7 +11,6 @@ const PAGE_TITLES: Record<string, string> = {
   "/enquiries": "Enquiries",
   "/buy-requirements": "Buy Requirements",
   "/memberships": "Memberships",
-  "/settings": "Settings",
 };
 
 function resolveTitle(pathname: string): string {

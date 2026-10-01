@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   MessageSquare,
   Package,
-  Settings,
   Tag,
 } from "lucide-react";
 
@@ -35,7 +34,6 @@ const NAV_SECTIONS: { label: string; items: NavItem[] }[] = [
     label: "Management",
     items: [
       { href: "/memberships", label: "Memberships", icon: CreditCard },
-      { href: "/settings", label: "Settings", icon: Settings },
     ],
   },
 ];

@@ -70,3 +70,41 @@ export async function getProductsByCompany(companyId: string): Promise<CompanyPr
     createdAt: row.created_at,
   }));
 }
+
+export type ProductListItem = {
+  id: string;
+  name: string;
+  imageUrl: string;
+  categoryName: string | null;
+  status: string;
+  createdAt: string;
+  company: { id: string; name: string; status: string } | null;
+};
+
+/** The cap on the Products page's full list; plenty for this directory, and named so the page can say when it's reached. */
+export const PRODUCT_LIST_LIMIT = 1000;
+
+/**
+ * Every product in any status with its company, most recent first: the
+ * Products page's company grouped list. Uses `supabaseAdmin` for the same
+ * reason as getPendingProducts (non approved rows are invisible to RLS).
+ */
+export async function getAllProducts(): Promise<ProductListItem[]> {
+  const { data, error } = await supabaseAdmin
+    .from("products")
+    .select("id, name, image_url, status, created_at, categories(name), companies(id, name, status)")
+    .order("created_at", { ascending: false })
+    .limit(PRODUCT_LIST_LIMIT);
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    imageUrl: row.image_url,
+    categoryName: row.categories?.name ?? null,
+    status: row.status,
+    createdAt: row.created_at,
+    company: row.companies ? { id: row.companies.id, name: row.companies.name, status: row.companies.status } : null,
+  }));
+}
