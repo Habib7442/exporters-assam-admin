@@ -1,6 +1,7 @@
 import { requireAdmin } from "@/lib/auth/require-admin";
 import { formatDateTime } from "@/lib/format-date";
 import { getRecentBuyRequirements } from "@/lib/supabase/queries/buy-requirements";
+import { BuyRequirementControls } from "@/components/buy-requirement-controls";
 
 export default async function BuyRequirementsPage() {
   await requireAdmin();
@@ -25,9 +26,18 @@ export default async function BuyRequirementsPage() {
               {requirement.location ? ` · ${requirement.location}` : ""}
             </p>
             {requirement.notes && <p className="mt-2 text-[#1A1F1A]">{requirement.notes}</p>}
-            <p className="mt-2 text-xs text-[#5B6B57]">
-              {requirement.isPublic ? "Public" : "Not shown publicly"}
-            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
+              <span
+                className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${requirement.isPublic ? "bg-[#E4EFD4] text-[#14532D]" : "bg-zinc-200 text-zinc-700"}`}
+              >
+                {requirement.isPublic ? "Public" : "Not shown publicly"}
+              </span>
+              <BuyRequirementControls
+                id={requirement.id}
+                isPublic={requirement.isPublic}
+                label={`${requirement.productText} · ${requirement.quantity}`}
+              />
+            </div>
           </div>
         ))}
         {buyRequirements.length === 0 && (
