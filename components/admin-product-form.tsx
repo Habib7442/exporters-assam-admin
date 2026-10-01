@@ -8,6 +8,10 @@ import { MAX_TOTAL_UPLOAD_BYTES, shrinkImage } from "@/lib/shrink-image";
 
 type Category = { id: string; name: string };
 
+// Must match lib/actions/admin-product.ts (a "use server" file can only export actions, so these are repeated).
+const MAX_IMAGES = 5;
+const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
+
 const INPUT_CLASS =
   "w-full rounded-md border border-[#E3E9DC] bg-white px-3 py-2 text-sm text-[#1A1F1A] outline-none focus:border-[#14532D] focus:ring-2 focus:ring-[#14532D]/20";
 
@@ -35,14 +39,24 @@ export function AdminProductForm({ companyId, companyName, categories }: { compa
     const formData = new FormData(event.currentTarget);
     setResult(null);
     startTransition(async () => {
+      // The same limits the server enforces (lib/actions/admin-product.ts),
+      // checked here first so the admin gets the right field error without
+      // uploading anything. The count before shrinking, so nobody waits for
+      // photos to be resized only to hear there are too many.
+      const files = formData.getAll("images").filter((v): v is File => v instanceof File && v.size > 0);
+      if (files.length > MAX_IMAGES) {
+        setResult({ ok: false, message: "Please check the form.", fieldErrors: { images: `Up to ${MAX_IMAGES} images.` } });
+        return;
+      }
       // Shrink big photos first: all images travel in one request, which
       // must stay under the server action body limit.
-      const images = await Promise.all(
-        formData
-          .getAll("images")
-          .filter((v): v is File => v instanceof File && v.size > 0)
-          .map((file) => shrinkImage(file)),
-      );
+      const images = await Promise.all(files.map((file) => shrinkImage(file)));
+      // shrinkImage keeps the original when it can't decode a file, and a
+      // PNG can stay large after re-encoding, so check each result too.
+      if (images.some((file) => file.size > MAX_IMAGE_BYTES)) {
+        setResult({ ok: false, message: "Please check the form.", fieldErrors: { images: "Each image must be under 2 MB." } });
+        return;
+      }
       if (images.reduce((sum, file) => sum + file.size, 0) > MAX_TOTAL_UPLOAD_BYTES) {
         setResult({
           ok: false,
