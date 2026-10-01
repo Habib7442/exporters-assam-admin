@@ -99,11 +99,21 @@ export default async function CompanyDetailPage({ params }: Props) {
       </div>
 
       <div className="flex flex-col gap-3">
-        <p className="text-sm text-[#5B6B57]">
-          {products.length === 0
-            ? "No products from this company yet."
-            : `${products.length} product${products.length === 1 ? "" : "s"}.`}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-[#5B6B57]">
+            {products.length === 0
+              ? "No products from this company yet."
+              : `${products.length} product${products.length === 1 ? "" : "s"}.`}
+          </p>
+          {company.status === "approved" && (
+            <Link
+              href={`/companies/${company.id}/products/new`}
+              className="rounded-full bg-[#14532D] px-4 py-1.5 text-sm font-medium text-white"
+            >
+              Add product
+            </Link>
+          )}
+        </div>
 
         {products.length > 0 && (
           <div className="overflow-x-auto rounded-xl border border-[#E3E9DC] bg-white">
