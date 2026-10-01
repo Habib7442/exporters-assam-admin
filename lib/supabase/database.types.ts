@@ -43,6 +43,8 @@ export type Database = {
         Row: {
           buyer_id: string
           category_id: string | null
+          consent_given_at: string | null
+          consent_notice_version: string | null
           contact_email: string | null
           contact_name: string
           created_at: string
@@ -56,6 +58,8 @@ export type Database = {
         Insert: {
           buyer_id: string
           category_id?: string | null
+          consent_given_at?: string | null
+          consent_notice_version?: string | null
           contact_email?: string | null
           contact_name: string
           created_at?: string
@@ -69,6 +73,8 @@ export type Database = {
         Update: {
           buyer_id?: string
           category_id?: string | null
+          consent_given_at?: string | null
+          consent_notice_version?: string | null
           contact_email?: string | null
           contact_name?: string
           created_at?: string
@@ -159,6 +165,8 @@ export type Database = {
           about: string | null
           address_line: string | null
           clerk_user_id: string | null
+          consent_given_at: string | null
+          consent_notice_version: string | null
           country: string
           created_at: string
           email: string
@@ -180,6 +188,8 @@ export type Database = {
           about?: string | null
           address_line?: string | null
           clerk_user_id?: string | null
+          consent_given_at?: string | null
+          consent_notice_version?: string | null
           country?: string
           created_at?: string
           email: string
@@ -201,6 +211,8 @@ export type Database = {
           about?: string | null
           address_line?: string | null
           clerk_user_id?: string | null
+          consent_given_at?: string | null
+          consent_notice_version?: string | null
           country?: string
           created_at?: string
           email?: string
@@ -262,6 +274,8 @@ export type Database = {
           buyer_id: string
           company_id: string | null
           company_name: string | null
+          consent_given_at: string | null
+          consent_notice_version: string | null
           contact_email: string | null
           contact_name: string
           created_at: string
@@ -278,6 +292,8 @@ export type Database = {
           buyer_id: string
           company_id?: string | null
           company_name?: string | null
+          consent_given_at?: string | null
+          consent_notice_version?: string | null
           contact_email?: string | null
           contact_name: string
           created_at?: string
@@ -294,6 +310,8 @@ export type Database = {
           buyer_id?: string
           company_id?: string | null
           company_name?: string | null
+          consent_given_at?: string | null
+          consent_notice_version?: string | null
           contact_email?: string | null
           contact_name?: string
           created_at?: string
@@ -520,6 +538,7 @@ export type Database = {
           p_about: string
           p_address_line: string
           p_clerk_user_id: string
+          p_consent_notice_version: string
           p_country: string
           p_email: string
           p_gst_number: string
@@ -538,6 +557,7 @@ export type Database = {
       create_buy_requirement: {
         Args: {
           p_category_id: string
+          p_consent_notice_version: string
           p_email: string
           p_is_public: boolean
           p_location: string
@@ -552,6 +572,20 @@ export type Database = {
           rate_limited: boolean
         }[]
       }
+      create_buy_requirement_enquiry: {
+        Args: {
+          p_buy_requirement_id: string
+          p_consent_notice_version: string
+          p_email: string
+          p_message: string
+          p_name: string
+          p_phone: string
+        }
+        Returns: {
+          enquiry_id: string
+          rate_limited: boolean
+        }[]
+      }
       create_category: {
         Args: { p_image_url?: string; p_name: string }
         Returns: {
@@ -562,6 +596,7 @@ export type Database = {
       create_company_enquiry: {
         Args: {
           p_company_id: string
+          p_consent_notice_version: string
           p_email: string
           p_message: string
           p_name: string
@@ -575,6 +610,7 @@ export type Database = {
       }
       create_enquiry: {
         Args: {
+          p_consent_notice_version: string
           p_email: string
           p_message: string
           p_name: string
@@ -617,6 +653,46 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      purge_expired_personal_data: {
+        Args: never
+        Returns: {
+          buy_requirements_deleted: number
+          buyers_deleted: number
+          enquiries_deleted: number
+        }[]
+      }
+      search_buy_requirement_ids: {
+        Args: { max_results?: number; search: string }
+        Returns: {
+          id: string
+          score: number
+        }[]
+      }
+      search_company_ids: {
+        Args: {
+          category_slug?: string
+          company_country?: string
+          max_results?: number
+          search: string
+        }
+        Returns: {
+          id: string
+          score: number
+        }[]
+      }
+      search_contains_pattern: { Args: { search: string }; Returns: string }
+      search_product_ids: {
+        Args: {
+          category_slug?: string
+          company_country?: string
+          max_results?: number
+          search: string
+        }
+        Returns: {
+          id: string
+          score: number
+        }[]
+      }
       slugify: { Args: { p_text: string }; Returns: string }
       update_business_listing: {
         Args: {
@@ -643,6 +719,21 @@ export type Database = {
         Returns: {
           category_id: string
           slug: string
+        }[]
+      }
+      update_product_submission: {
+        Args: {
+          p_category_id: string
+          p_clerk_user_id: string
+          p_description: string
+          p_image_urls: string[]
+          p_name: string
+          p_product_id: string
+        }
+        Returns: {
+          product_id: string
+          slug: string
+          status: string
         }[]
       }
     }

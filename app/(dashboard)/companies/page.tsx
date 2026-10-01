@@ -8,6 +8,7 @@ const STATUS_STYLES: Record<string, string> = {
   approved: "bg-[#E4EFD4] text-[#14532D]",
   pending: "bg-amber-100 text-amber-800",
   rejected: "bg-red-100 text-red-700",
+  hidden: "bg-zinc-200 text-zinc-700",
 };
 
 export default async function CompaniesPage() {

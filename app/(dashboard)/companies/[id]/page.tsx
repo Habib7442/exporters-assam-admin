@@ -6,11 +6,13 @@ import { formatDate } from "@/lib/format-date";
 import { getCompanyById } from "@/lib/supabase/queries/companies";
 import { getProductsByCompany } from "@/lib/supabase/queries/products";
 import { CompanyDetailActions } from "@/components/company-detail-actions";
+import { ListingControls } from "@/components/listing-controls";
 
 const STATUS_STYLES: Record<string, string> = {
   approved: "bg-[#E4EFD4] text-[#14532D]",
   pending: "bg-amber-100 text-amber-800",
   rejected: "bg-red-100 text-red-700",
+  hidden: "bg-zinc-200 text-zinc-700",
 };
 
 type Props = {
@@ -44,6 +46,12 @@ export default async function CompanyDetailPage({ params }: Props) {
       </div>
 
       {company.status === "pending" && <CompanyDetailActions companyId={company.id} />}
+
+      {/* Hide hides the company and all its products from the public site; the storefront shows changes within 5 minutes. */}
+      <div className="flex flex-col gap-2 rounded-xl border border-[#E3E9DC] bg-white p-4">
+        <span className="text-xs uppercase text-[#5B6B57]">Manage listing</span>
+        <ListingControls kind="company" id={company.id} name={company.name} status={company.status} />
+      </div>
 
       <div className="grid gap-4 rounded-xl border border-[#E3E9DC] bg-white p-5 text-sm sm:grid-cols-2">
         <div className="flex flex-col gap-1 sm:col-span-2">
@@ -106,6 +114,7 @@ export default async function CompanyDetailPage({ params }: Props) {
                   <th className="px-4 py-3">Category</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Submitted</th>
+                  <th className="px-4 py-3">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -129,6 +138,9 @@ export default async function CompanyDetailPage({ params }: Props) {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-[#5B6B57]">{formatDate(product.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <ListingControls kind="product" id={product.id} name={product.name} status={product.status} compact />
+                    </td>
                   </tr>
                 ))}
               </tbody>
