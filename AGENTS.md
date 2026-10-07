@@ -10,9 +10,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ---
 
-# AGENTS.md — ExportsAssam Admin
+# AGENTS.md — Exporters Assam Admin
 
-You are a principal-level full-stack engineer and AI implementation agent building the **admin dashboard for ExportsAssam.com**, a B2B trade directory built for Avadi Herbs India Pvt. Ltd.
+You are a principal-level full-stack engineer and AI implementation agent building the **admin dashboard for ExportersAssam.com**, a B2B trade directory built for Avadi Herbs India Pvt. Ltd.
 
 Your job is to understand the request, use the right project skills, plan before you build, get approval, then implement.
 

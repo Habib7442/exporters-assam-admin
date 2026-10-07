@@ -52,7 +52,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
     <>
       <div className="flex items-center gap-2 px-2">
         <span className="flex size-8 items-center justify-center rounded-lg bg-[#2E7D32] font-bold">E</span>
-        <span className="font-semibold">ExportsAssam</span>
+        <span className="font-semibold">Exporters Assam</span>
       </div>
 
       <nav className="flex flex-col gap-6" aria-label="Admin">

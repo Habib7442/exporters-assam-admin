@@ -20,7 +20,7 @@ function resolveTitle(pathname: string): string {
   const section = Object.entries(PAGE_TITLES).find(
     ([path]) => path !== "/" && pathname.startsWith(`${path}/`),
   );
-  return section?.[1] ?? "ExportsAssam Admin";
+  return section?.[1] ?? "Exporters Assam Admin";
 }
 
 export function AdminTopbar() {

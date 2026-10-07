@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ExportsAssam Admin",
-  description: "Internal admin dashboard for ExportsAssam.com",
+  title: "Exporters Assam Admin",
+  description: "Internal admin dashboard for Exporters Assam",
 };
 
 // Brand tokens (DESIGN.md, ../expoters-assam — shared brand, restated here
